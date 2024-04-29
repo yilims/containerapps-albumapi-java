@@ -36,7 +36,7 @@ jobs:
           registryPassword: ${{ secrets.BUILDERTESTOLDCLOUD_REGISTRY_PASSWORD }}
           containerAppName: jar-test
           resourceGroup: liyi-test-rg
-          imageToBuild: yilitest.azurecr.io/builder-test-old-cloud:${{ github.sha }}
+          imageToBuild: liyitest.azurecr.io/builder-test-old-cloud:${{ github.sha }}
           
             
 
