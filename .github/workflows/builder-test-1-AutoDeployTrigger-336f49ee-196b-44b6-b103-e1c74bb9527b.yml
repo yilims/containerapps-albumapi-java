@@ -1,0 +1,43 @@
+name: Trigger auto deployment for builder-test-1
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/builder-test-1-AutoDeployTrigger-336f49ee-196b-44b6-b103-e1c74bb9527b.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.BUILDERTEST1_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: liyitest.azurecr.io
+          registryUsername: ${{ secrets.BUILDERTEST1_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.BUILDERTEST1_REGISTRY_PASSWORD }}
+          containerAppName: builder-test-1
+          resourceGroup: yili-test-rg
+          imageToBuild: liyitest.azurecr.io/builder-test-1:${{ github.sha }}
+          
+            
+
+     
+
