@@ -18,24 +18,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout to the branch
-        uses: actions/checkout@v2
-
+      - uses: actions/checkout@v4
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.BUILDERTEST1_AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - uses: azure/setup-kubectl@v3
+        name: Setup kubectl
+      - name: Setup kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.26'
+      - name: Set AKS context
+        id: set-context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: 'liyitest'
+          cluster-name: 'liyi-build-svc-test'
+          admin: 'false'
+          use-kubelogin: 'true'
+      - name: Login to Azure Container Registry
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+      - name: install kp
+        run: |
+          curl -L https://github.com/buildpacks-community/kpack-cli/releases/download/v0.13.0/kp-linux-amd64-0.13.0 -o kp
+          chmod +x kp
+      - name: Upload source code and build image
+        run: ./kp image save spring-petclinic-image --tag ${{ secrets.ACR_PASSWORD }}/app/spring-petclinic --local-path . --builder my-builder --service-account tutorial-service-account
+      - name: Stream build logs
+        run: ./kp build logs spring-petclinic-image -b 1
 
-      - name: Build and push container image to registry
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }} 
-          registryUrl: liyitest.azurecr.io
-          registryUsername: ${{ secrets.BUILDERTEST1_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.BUILDERTEST1_REGISTRY_PASSWORD }}
-          containerAppName: builder-test-1
-          resourceGroup: yili-test-rg
-          imageToBuild: liyitest.azurecr.io/builder-test-1:${{ github.sha }}
           
             
 
